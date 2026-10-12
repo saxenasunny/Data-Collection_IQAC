@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
@@ -35,7 +37,8 @@ export async function GET(
     return NextResponse.json({ session });
   } catch (err: unknown) {
     console.error("GET session detail error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
@@ -67,7 +70,8 @@ export async function PUT(
     return NextResponse.json({ success: true, session: updated });
   } catch (err: unknown) {
     console.error("PUT session error:", err);
-    return NextResponse.json({ error: "Failed to update session" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
@@ -88,6 +92,7 @@ export async function DELETE(
     return NextResponse.json({ success: true, message: "Session deleted" });
   } catch (err: unknown) {
     console.error("DELETE session error:", err);
-    return NextResponse.json({ error: "Failed to delete session" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

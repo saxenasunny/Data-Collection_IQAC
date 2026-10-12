@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -51,7 +53,8 @@ export async function POST(
     return NextResponse.json({ success: true, field: newField });
   } catch (err: unknown) {
     console.error("POST field error:", err);
-    return NextResponse.json({ error: "Failed to create field" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
@@ -82,6 +85,7 @@ export async function DELETE(
     return NextResponse.json({ success: true, message: "Field removed" });
   } catch (err: unknown) {
     console.error("DELETE field error:", err);
-    return NextResponse.json({ error: "Failed to delete field" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

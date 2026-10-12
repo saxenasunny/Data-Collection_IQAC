@@ -210,12 +210,12 @@ export default function AdminDashboardPage() {
         targetAudience: newAudience,
         isOpen: true,
         fields: newFields
-          .filter((f) => f.label.trim())
+          .filter((f) => f.label && f.label.trim())
           .map((f, i) => ({
             label: f.label.trim(),
-            fieldType: f.fieldType,
-            isRequired: f.isRequired,
-            placeholder: f.placeholder.trim() || null,
+            fieldType: f.fieldType || "text",
+            isRequired: Boolean(f.isRequired),
+            placeholder: f.placeholder ? f.placeholder.trim() : null,
             options: f.options
               ? f.options.split(",").map((s) => s.trim()).filter(Boolean)
               : null,
