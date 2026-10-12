@@ -1,0 +1,108 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Configured for Supabase PostgreSQL with Connection Pooling on Vercel
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+}
+
+model Student {
+  id             String       @id @default(cuid())
+  registrationId String       @unique
+  applicationNo  String
+  name           String
+  department     String
+  program        String
+  year           String
+  // Cumulative baseline data JSON (stringified): retains all previous rounds' submitted data
+  baselineData   String       @default("{}")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  submissions    Submission[]
+
+  @@index([registrationId])
+  @@index([applicationNo])
+  @@index([department])
+}
+
+model Faculty {
+  id           String       @id @default(cuid())
+  facultyId    String       @unique // Unique Faculty ID or Email
+  name         String
+  designation  String
+  department   String
+  // Cumulative baseline data JSON (stringified): retains all previous rounds' submitted data
+  baselineData String       @default("{}")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  submissions  Submission[]
+
+  @@index([facultyId])
+  @@index([department])
+}
+
+model CollectionSession {
+  id                String       @id @default(cuid())
+  title             String
+  description       String?
+  targetAudience    String       @default("ALL") // "ALL", "STUDENT", "FACULTY"
+  targetDepartments String? // Comma-separated or null for all departments
+  isOpen            Boolean      @default(true) // Admin controls: When true, users can submit and edit! When false, session is locked.
+  deadline          DateTime?
+  fields            FormField[]
+  submissions       Submission[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model FormField {
+  id          String            @id @default(cuid())
+  sessionId   String
+  session     CollectionSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  label       String
+  fieldName   String // sanitized slug used as key in responses & baseline data
+  fieldType   String // text, number, email, select, radio, checkbox, textarea, date, url
+  placeholder String?
+  helperText  String?
+  isRequired  Boolean           @default(false)
+  options     String? // JSON string array for select, radio, checkbox
+  fieldOrder  Int               @default(0)
+  createdAt   DateTime          @default(now())
+
+  @@index([sessionId])
+}
+
+model Submission {
+  id             String            @id @default(cuid())
+  sessionId      String
+  session        CollectionSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  responderType  String // "STUDENT" or "FACULTY"
+  studentId      String?
+  student        Student?          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  facultyId      String?
+  faculty        Faculty?          @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  responseValues String // JSON string containing { fieldName: value }
+  isSubmitted    Boolean           @default(true)
+  submittedAt    DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([sessionId, responderType, studentId])
+  @@unique([sessionId, responderType, facultyId])
+  @@index([sessionId])
+  @@index([studentId])
+  @@index([facultyId])
+}
